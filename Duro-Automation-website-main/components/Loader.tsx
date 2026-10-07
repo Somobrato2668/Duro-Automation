@@ -10,13 +10,34 @@ export default function Loader() {
   const [fading, setFading] = useState(false);
   const setLoaded = useJourney((s) => s.setLoaded);
 
-  const done = progress >= 100 && !active;
+  const done = (progress >= 100 && !active) || progress >= 95;
 
   useEffect(() => {
-    if (!done) return;
-    setLoaded(true);
-    const t1 = setTimeout(() => setFading(true), 350);
-    const t2 = setTimeout(() => setGone(true), 1600);
+    let t1: NodeJS.Timeout;
+    let t2: NodeJS.Timeout;
+
+    // Trigger completion if Drei reports ready OR after safety timeout (3s max)
+    const triggerComplete = () => {
+      setLoaded(true);
+      t1 = setTimeout(() => setFading(true), 300);
+      t2 = setTimeout(() => setGone(true), 1200);
+    };
+
+    if (done) {
+      triggerComplete();
+    } else {
+      // Safety fallback: never keep user stuck on loading screen longer than 3.5s
+      const fallbackTimer = setTimeout(() => {
+        triggerComplete();
+      }, 3500);
+
+      return () => {
+        clearTimeout(fallbackTimer);
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -41,7 +62,7 @@ export default function Loader() {
       <div className="mt-10 h-px w-48 bg-white/10 overflow-hidden">
         <div
           className="h-full bg-gold transition-[width] duration-300 ease-out"
-          style={{ width: `${progress}%` }}
+          style={{ width: `${Math.max(progress, 15)}%` }}
         />
       </div>
       <p className="mt-4 text-[10px] tracking-[0.3em] uppercase text-stone-500">

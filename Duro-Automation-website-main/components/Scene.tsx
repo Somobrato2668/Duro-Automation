@@ -222,7 +222,8 @@ export default function Scene() {
 
       const frameCount = (r.clip && CLIP_FRAME_COUNTS[r.clip]) || 240;
       const textures: THREE.Texture[] = [];
-      const loader = new THREE.TextureLoader();
+      const bgLoadingManager = new THREE.LoadingManager();
+      const loader = new THREE.TextureLoader(bgLoadingManager);
 
       for (let f = 1; f <= frameCount; f++) {
         const frameStr = String(f).padStart(3, "0");
